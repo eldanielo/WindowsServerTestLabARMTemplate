@@ -1,7 +1,7 @@
 # WindowsServerTestLabARMTemplate
 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/azuredeploy.josn" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https3A%2F%2Fraw.githubusercontent.com%2Feldanielo%2FWindowsServerTestLabARMTemplate%2Fmaster%2Fazuredeploy.josn" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
