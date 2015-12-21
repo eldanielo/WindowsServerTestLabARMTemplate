@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
-      "defaultValue": "Administrator",
+      "defaultValue": "labuser",
       "type": "string",
       "minLength": 1,
       "metadata": {
@@ -32,7 +32,7 @@
       }
     },
 
-    "vmSizeedge": {
+    "vmSizeEdge": {
       "type": "string",
       "defaultValue": "Standard_A4",
       "minLength": 1,
@@ -40,7 +40,7 @@
         "description": "VM Size"
       }
     },
-    "vmSizedc": {
+    "vmSizeDC": {
       "type": "string",
       "defaultValue": "Standard_A1",
       "minLength": 1,
@@ -48,7 +48,7 @@
         "description": "VM Size"
       }
     },
-    "vmSizeapp": {
+    "vmSizeApp": {
       "type": "string",
       "defaultValue": "Standard_A1",
       "minLength": 1,
@@ -279,10 +279,10 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "131.107.0.5",
               "publicIPAddress": {
-                "id": " concat([resourceId('Microsoft.Network/publicIPAddresses/',variables('edge'),'pip_',copyindex())]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('edge'),'pip_',copyindex()))]"
               },
               "subnet": {
-                "id":"[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),copyindex(), '/subnets/', variables('subnetNameOutside'))]"
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),copyindex(), '/subnets/', variables('subnetNameOutside'))]"
               }
             }
           }
