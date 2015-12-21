@@ -1,5 +1,10 @@
 # WindowsServerTestLabARMTemplate
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
+
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/azuredeploy.josn" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
 <a href="https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/azuredeploy.josn" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
