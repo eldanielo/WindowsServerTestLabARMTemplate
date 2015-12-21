@@ -10,7 +10,7 @@
         "description": "Username for the Virtual Machine."
       }
     },
-    "count": {
+    "labsCount": {
       "defaultValue": "2",
       "type": "int",
       "metadata": {
@@ -114,7 +114,7 @@
     "vhdStorageName": "[concat('vhdstorage', uniqueString(resourceGroup().id))]",
 
 
-    "virtualNetworkName": "VirtualNetwork",
+    "virtualNetworkName": "VirtualNetwork_",
 
     "diagnosticsStorageName": "[variables('vhdStorageName')]",
     "diagnosticsStorageResourceGroup": "[resourcegroup().name]",
@@ -145,7 +145,7 @@
       "name": "[concat(variables('edge'), 'pip_', copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "properties": {
@@ -161,7 +161,7 @@
       "name": "[concat(variables('dc'),'pip_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "properties": {
@@ -177,7 +177,7 @@
       "name": "[concat(variables('app'),'pip_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "properties": {
@@ -193,7 +193,7 @@
       "name": "[concat(variables('inet'),'pip_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "properties": {
@@ -209,7 +209,7 @@
       "name": "[concat(variables('client'),'pip_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "properties": {
@@ -225,7 +225,7 @@
       "name": "[concat(variables('virtualNetworkName'),copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -261,7 +261,7 @@
       "name": "[concat(variables('edge'), 'NicOne_', copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -295,7 +295,7 @@
       "name": "[concat(variables('edge'), 'NicTwo_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -325,7 +325,7 @@
       "name": "[concat(variables('edge'), 'NicThree_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -355,7 +355,7 @@
       "name": "[concat(variables('dc'), 'NicOne_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -386,10 +386,10 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('app'), 'Nic',copyindex())]",
+      "name": "[concat(variables('app'), 'Nic_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -423,7 +423,7 @@
       "name": "[concat(variables('client'), 'NicOne_', copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -457,7 +457,7 @@
       "name": "[concat(variables('client'), 'NicTwo_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -485,10 +485,10 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('inet'), 'Nic',copyindex())]",
+      "name": "[concat(variables('inet'), 'Nic_',copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -522,7 +522,7 @@
       "name": "[concat(variables('edge'),copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -589,7 +589,7 @@
       "name": "[concat(variables('dc'),copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -646,7 +646,7 @@
       "name": "[concat(variables('app'),copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -654,7 +654,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('app'), 'Nic',copyindex()))]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('app'), 'Nic_',copyindex()))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -684,7 +684,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('app'), 'Nic',copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('app'), 'Nic_',copyindex()))]"
             }
           ]
         },
@@ -702,7 +702,7 @@
       "name": "[concat(variables('client'),copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -764,7 +764,7 @@
       "name": "[concat(variables('inet'),copyindex())]",
       "copy": {
         "name": "loop",
-        "count": "[parameters('count')]"
+        "count": "[parameters('labsCount')]"
       },
       "location": "[resourceGroup().location]",
       "tags": {
@@ -772,7 +772,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('inet'), 'Nic',copyindex()))]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('inet'), 'Nic_',copyindex()))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -802,7 +802,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('inet'), 'Nic',copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('inet'), 'Nic_',copyindex()))]"
             }
           ]
         },

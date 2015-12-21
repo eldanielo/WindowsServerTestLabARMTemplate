@@ -25,9 +25,6 @@
   <Import Condition=" Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets') " Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Deployment\1.1\DeploymentProject.targets" />
   <!-- vertag<:>end -->
   <ItemGroup>
-    <Folder Include="Tools\" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Deployment.targets">
       <Visible>False</Visible>
     </None>
@@ -35,24 +32,6 @@
     <Content Include="Templates\WindowsServerTestLabMultiple.json" />
     <Content Include="Templates\WindowsServerTestLabSingle.json" />
     <Content Include="Templates\WindowsServerTestLab.parameters.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Tools\AzCopy.exe" />
-    <Content Include="Tools\Microsoft.Data.Edm.dll">
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="Tools\Microsoft.Data.OData.dll">
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="Tools\Microsoft.Data.Services.Client.dll">
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="Tools\Microsoft.WindowsAzure.Storage.dll">
-      <Visible>False</Visible>
-    </Content>
-    <Content Include="Tools\Microsoft.WindowsAzure.Storage.DataMovement.dll">
-      <Visible>False</Visible>
-    </Content>
   </ItemGroup>
   <Target Name="GetReferenceAssemblyPaths" />
 </Project>
