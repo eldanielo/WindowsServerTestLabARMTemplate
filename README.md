@@ -12,8 +12,8 @@
 This Template creates the basic components for the <a href="http://social.technet.microsoft.com/wiki/contents/articles/7807.windows-server-2012-test-lab-guides.aspx">Windows Server Test Lab Guides</a>
 </p>
 
-The parameter "labCount" indicates how often the template should be deployed, making it easy to deploy it for multiple lab users. All resources will be deployed in the same Resource Group and will be tagged by a tailing index starting at 0, indicating its iteration.
-e.g 
+The parameter "labCount" indicates how often the template should be deployed, making it easy to deploy it for multiple lab users. All resources will be deployed in the same Resource Group and will be tagged by a tailing index starting at 0, indicating its iteration.</br>
+e.g: </br>
 VirtualNetwork_0 </br>
 edge-pip_0 </br>
 edgeNicOne_0 </br>
