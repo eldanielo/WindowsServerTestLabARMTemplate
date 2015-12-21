@@ -1,0 +1,904 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "defaultValue": "Administrator",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "defaultValue": "Passw0rd",
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Globally unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+
+    "vmSizeEdge1": {
+      "type": "string",
+      "defaultValue": "Standard_A4",
+      "minLength": 1,
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "vmSizeDC1": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "minLength": 1,
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "vmSizeAPP1": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "minLength": 1,
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "vmSizeINET1": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "minLength": 1,
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "vmSizeClient": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "minLength": 1,
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    }
+  },
+  "variables": {
+
+    "Edge1": "edge1",
+    "DC1": "dc1",
+    "DC2": "dc2",
+    "APP1": "app1",
+    "INET1": "inet1",
+    "Client1": "client1",
+
+
+
+
+    "Edge1IP": "edge1",
+    "DC1IP": "DC1",
+    "DC2IP": "DC2",
+    "APP1IP": "APP1",
+    "INET1IP": "INET1",
+    "Client1IP": "Client1",
+
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "OSDiskName": "osdiskforwindowssimple",
+
+    "addressPrefixCorpnet": "10.0.0.0/16",
+    "addressPrefixOutside": "131.107.0.0/24",
+    "subnetNameOutside": "Outside",
+    "subnetNameCorpnet": "Corpnet",
+
+    "subnetPrefixOutside": "131.107.0.0/24",
+    "subnetPrefixCorpnet": "10.0.0.0/24",
+
+    "vhdStorageType": "Standard_LRS",
+    "publicIPAddressType": "Dynamic",
+    "vhdStorageContainerName": "vhds",
+    "vhdStorageName": "[concat('vhdstorage', uniqueString(resourceGroup().id))]",
+
+
+    "virtualNetworkName": "VirtualNetwork",
+
+    "vnetIdCorpnet": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnetRefCorpnet": "[concat(variables('vnetIdCorpnet'), '/subnets/', variables('subnetNameCorpnet'))]",
+    "subnetRefOutside": "[concat(variables('vnetIdCorpnet'), '/subnets/', variables('subnetNameOutside'))]",
+
+    "diagnosticsStorageName": "[variables('vhdStorageName')]",
+    "diagnosticsStorageResourceGroup": "[resourcegroup().name]",
+    "accountid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', variables('diagnosticsStorageResourceGroup'), '/providers/','Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageName'))]",
+    "wadlogs": "<WadCfg> <DiagnosticMonitorConfiguration overallQuotaInMB=\"4096\" xmlns=\"http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration\"> <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter=\"Error\"/> <WindowsEventLog scheduledTransferPeriod=\"PT1M\" > <DataSource name=\"Application!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"Security!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"System!*[System[(Level = 1 or Level = 2)]]\" /></WindowsEventLog>",
+    "wadperfcounters1": "<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% Processor Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU utilization\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% Privileged Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU privileged time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor(_Total)\\% User Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU user time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor Information(_Total)\\Processor Frequency\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"CPU frequency\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\System\\Processes\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Processes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Process(_Total)\\Thread Count\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Threads\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Process(_Total)\\Handle Count\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Handles\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\% Committed Bytes In Use\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Memory usage\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Available Bytes\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Committed Bytes\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory committed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\Commit Limit\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory commit limit\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active time\" locale=\"en-us\"/></PerformanceCounterConfiguration>",
+    "wadperfcounters2": "<PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Read Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active read time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\% Disk Write Time\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk active write time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Transfers/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Reads/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk read operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Writes/sec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk write operations\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Read Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk read speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk(_Total)\\Disk Write Bytes/sec\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk write speed\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\LogicalDisk(_Total)\\% Free Space\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Disk free space (percentage)\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+    "wadcfgxstart": "[concat(variables('wadlogs'), variables('wadperfcounters1'), variables('wadperfcounters2'), '<Metrics resourceId=\"')]",
+    "wadmetricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', variables('diagnosticsStorageResourceGroup'), '/providers/', 'Microsoft.Compute/virtualMachines/', variables('edge1'))]",
+    "wadcfgxend": "><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('vhdStorageName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "StorageAccount"
+      },
+      "properties": {
+        "accountType": "[variables('vhdStorageType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('Edge1'), 'pip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'),  variables('Edge1'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('DC1'),'pip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'),  variables('DC1'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('DC2'),'pip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'),  variables('DC2'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('APP1'),'pip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'),  variables('APP1'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('INET1'),'pip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'),  variables('INET1'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('Client1'),'pip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsNameForPublicIP'),  variables('Client1'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "[variables('virtualNetworkName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefixCorpnet')]",
+            "[variables('addressPrefixOutside')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetnameCorpnet')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefixCorpnet')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameOutside')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefixOutside')]"
+            }
+          }
+
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('Edge1'), 'nic1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('Edge1'),'pip'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('Edge1'), 'ipconfig1')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "131.107.0.5",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('Edge1'),'pip'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefOutside')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('Edge1'), 'nic2')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('Edge1'), 'ipconfig2')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "131.107.0.6",
+              "subnet": {
+                "id": "[variables('subnetRefOutside')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('Edge1'), 'nic3')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('Edge1'), 'ipconfig3')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.0.5",
+              "subnet": {
+                "id": "[variables('subnetRefCorpnet')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('DC1'), 'nic1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('DC1'),'pip')]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('DC1'), 'ipconfig1')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.0.4",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('DC1'),'pip'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefCorpnet')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('App1'), 'nic')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('App1'),'pip'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('App1'), 'ipconfig1')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.0.6",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('App1'),'pip'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefCorpnet')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('Client1'), 'nic1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('Client1'),'pip'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('Client1'), 'ipconfig1')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "131.107.0.7",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('Client1'),'pip'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefOutside')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('Client1'), 'nic2')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('Client1'), 'ipconfig2')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.0.7",
+              "subnet": {
+                "id": "[variables('subnetRefCorpnet')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('INET1'), 'nic')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('INET1'),'pip'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('INET1'), 'ipconfig1')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "131.107.0.4",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('INET1'),'pip'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefOutside')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('Edge1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Edge1'), 'nic1'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Edge1'), 'nic2'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Edge1'), 'nic3'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeEdge1')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('Edge1')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('vhdStorageName'), '.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('Edge1'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": { "primary": true },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Edge1'), 'nic1'))]"
+            },
+            {
+              "properties": { "primary": false },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Edge1'), 'nic2'))]"
+            },
+            {
+              "properties": { "primary": false },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Edge1'), 'nic3'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "AzureDiagnostics"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('Edge1'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), variables('wadcfgxend')))]",
+              "storageAccount": "[variables('diagnosticsStorageName')]"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[variables('diagnosticsStorageName')]",
+              "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
+              "storageAccountEndPoint": "https://core.windows.net"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('DC1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('DC1'), 'nic1'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeDC1')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('DC1')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('vhdStorageName'), '.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('DC1'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": { "primary": true },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('DC1'), 'nic1'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "AzureDiagnostics"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('DC1'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), variables('wadcfgxend')))]",
+              "storageAccount": "[variables('diagnosticsStorageName')]"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[variables('diagnosticsStorageName')]",
+              "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
+              "storageAccountEndPoint": "https://core.windows.net"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('App1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('App1'), 'nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeApp1')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('App1')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('vhdStorageName'), '.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('App1'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('App1'), 'nic'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "AzureDiagnostics"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('App1'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), variables('wadcfgxend')))]",
+              "storageAccount": "[variables('diagnosticsStorageName')]"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[variables('diagnosticsStorageName')]",
+              "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
+              "storageAccountEndPoint": "https://core.windows.net"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('Client1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Client1'), 'nic1'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('Client1'), 'nic2'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeClient')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('Client1')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('vhdStorageName'), '.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('Client1'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": { "primary": true },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Client1'), 'nic1'))]"
+            },
+            {
+              "properties": { "primary": false },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('Client1'), 'nic2'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "AzureDiagnostics"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('Client1'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), variables('wadcfgxend')))]",
+              "storageAccount": "[variables('diagnosticsStorageName')]"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[variables('diagnosticsStorageName')]",
+              "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
+              "storageAccountEndPoint": "https://core.windows.net"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('INET1')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('vhdStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(variables('INET1'), 'nic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeINET1')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('INET1')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('vhdStorageName'), '.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('INET1'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('INET1'), 'nic'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('http://', variables('diagnosticsStorageName'), '.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "Microsoft.Insights.VMDiagnosticsSettings",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "AzureDiagnostics"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('INET1'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('wadmetricsresourceid'), variables('wadcfgxend')))]",
+              "storageAccount": "[variables('diagnosticsStorageName')]"
+            },
+            "protectedSettings": {
+              "storageAccountName": "[variables('diagnosticsStorageName')]",
+              "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
+              "storageAccountEndPoint": "https://core.windows.net"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
