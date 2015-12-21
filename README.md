@@ -1,7 +1,7 @@
 # WindowsServerTestLabARMTemplate
 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https3A%2F%2Fraw.githubusercontent.com%2Feldanielo%2FWindowsServerTestLabARMTemplate%2Fmaster%2Fazuredeploy.josn" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Feldanielo%2FWindowsServerTestLabARMTemplate%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -10,4 +10,3 @@
 </a>
 
 This Template creates the basic components for the <a href="http://social.technet.microsoft.com/wiki/contents/articles/7807.windows-server-2012-test-lab-guides.aspx">Windows Server Test Lab Guides</a>
-
