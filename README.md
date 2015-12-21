@@ -1,6 +1,6 @@
 # WindowsServerTestLabARMTemplate
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/WindowsServerTestLab/Templates/WindowsServerTestLabMultiple.json)
-<a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/WindowsServerTestLab/Templates/WindowsServerTestLabMultiple.json" target="_blank">
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/azuredeploy.josn)
+<a href="https://raw.githubusercontent.com/eldanielo/WindowsServerTestLabARMTemplate/master/azuredeploy.josn" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
